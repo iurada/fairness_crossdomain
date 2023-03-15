@@ -1,0 +1,11 @@
+python main.py^
+ --experiment .\experiments\classification\baseline\^
+ --dataset .\datasets\classification\CelebA\^
+ --max_iters 46875^
+ --batch_size 64^
+ --num_workers 1^
+ --validate_every=500^
+ --tracked_metrics Acc MGA mGA DA HF^
+ --model_selection mGA^
+ --baseline_MGA 0^
+ --baseline_DA 100
