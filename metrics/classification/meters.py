@@ -1,5 +1,6 @@
 import torch
 from metrics.utils import AbstractMeter
+from sklearn.metrics import confusion_matrix
 
 # Remember to sort meters according to the computational order 
 # -- This will be the full presentation order:
@@ -137,22 +138,47 @@ class DeltaDTO(AbstractMeter):
         return current > best
 
 class DEO(AbstractMeter):
+
     def __init__(self, args, meters_dict):
-        pass
+        self.meters_dict = meters_dict
+        self.value = None
+        self.deodds = None
 
     def compute(self, predicted, target, group):
-        pass
+        target_gr0 = target[:, 0][group[:, 0] == 0]
+        target_gr1 = target[:, 0][group[:, 0] == 1]
+        predicted_gr0 = predicted[:, 0][group[:, 0] == 0]
+        predicted_gr1 = predicted[:, 0][group[:, 0] == 1]
+
+        tn_0, fp_0, fn_0, tp_0 = confusion_matrix(
+            target_gr0.numpy(), predicted_gr0.numpy()).ravel()
+        
+        tn_1, fp_1, fn_1, tp_1 = confusion_matrix(
+            target_gr1.numpy(), predicted_gr1.numpy()).ravel()
+
+        TPR_prot_attr_0 = tp_0 / (tp_0 + fn_0)
+        TPR_prot_attr_1 = tp_1 / (tp_1 + fn_1)
+        FPR_prot_attr_0 = fp_0 / (fp_0 + tn_0)
+        FPR_prot_attr_1 = fp_1 / (fp_1 + tn_1)
+
+        self.value = abs(TPR_prot_attr_0 - TPR_prot_attr_1)
+        self.deodds = self.value + abs(FPR_prot_attr_0 - FPR_prot_attr_1)
+        return self.value
 
     @staticmethod
     def compare(current, best):
         return current < best
 
 class DEOdds(AbstractMeter):
+    required_metrics = ['DEO']
+
     def __init__(self, args, meters_dict):
-        pass
+        self.meters_dict = meters_dict
+        self.value = None
 
     def compute(self, predicted, target, group):
-        pass
+        self.value = self.meters_dict['DEO'].deodds
+        return self.value
 
     @staticmethod
     def compare(current, best):

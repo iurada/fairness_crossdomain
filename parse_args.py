@@ -55,14 +55,18 @@ def parse_arguments():
     args.experiment_type = exp_type
 
     #! Solve metrics dependencies
-    #TODO: DO IT RECURSIVELY!
+    def add_required_metrics(required_metrics, tracked_metrics):
+        for metric in required_metrics:
+            if metric not in tracked_metrics:
+                tracked_metrics.append(metric)
+                obj = eval(f'{exp_type}_meters.{metric}')
+                if hasattr(obj, 'required_metrics'):
+                    add_required_metrics(obj.required_metrics, tracked_metrics)
+
     for metric in args.tracked_metrics:
         obj = eval(f'{exp_type}_meters.{metric}')
-
         if hasattr(obj, 'required_metrics'):
-            for required_metric in obj.required_metrics:
-                if required_metric not in args.tracked_metrics:
-                    args.tracked_metrics.append(required_metric)
+            add_required_metrics(obj.required_metrics, args.tracked_metrics)
 
     
     #print(args)
