@@ -1,66 +1,8 @@
-# Fairness meets Cross-Domain Learning
+# Fairness meets Cross-Domain Learning: a new perspective on Models and Metrics
 
-## Datasets
-1. Download and extract the CelebA "Align&Cropped Images" dataset and the Attributes Annotations from https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
-2. Download the COVID-19 Chest X-Ray dataset from https://github.com/ieee8023/covid-chestxray-dataset
-3. Download the UTKFace "Aligned&Cropped Faces" dataset and the Landmarks Annotations from https://susanqq.github.io/UTKFace/
+Official code of our work "Fairness meets Cross-Domain Learning: a new perspective on Models and Metrics"
 
-## Requirements
-We used: 
-- Python version 3.7.6
-- CUDA 11.3
+<p align="center"><img width="50%" src="./assets/teaser.png"></p>
 
-### g-SMOTE Dependencies
-Since g-SMOTE official code was not provided we implemented it using HyperInverter (https://github.com/VinAIResearch/HyperInverter). To be able to train and run 
-g-SMOTE take a look at the README.md file in the `gsmote/hyperinverter` folder.
-
-### General Dependencies
-To install all the required dependencies go to the root folder of this project and run:
-```bash
-pip install -r requirements.txt
-```
-
-## Experiments
-
-### Single-Task Attribute Prediction
-Please refer to `parse_args.py` for the complete list of arguments.
-
-The simplest way to run a Single-Task attribute prediction experiment on CelebA is:
-```bash
-python main.py --experiment=baseline --attribute=3 --protected_attribute=20
-```
-
-Note that to run g-SMOTE you need to do: (see `gsmote.py` file for the complete list of arguments)
-```bash
-cd gsmote/hyperinverter/
-python gsmote.py [--arguments...]
-```
-
-To run the Single-Task attribute prediction experiment on COVID-19 Chest X-Ray dataset you need to pass the following flag:
-```bash
-python main.py --use_medical_data [--other_arguments...]
-```
-
-### Multi-Task Attribute Prediction
-Please refer to `parse_args.py` for the complete list of arguments and check `main_multitask.py` to know which methods are supported.
-
-The simplest way to run the Multi-Task attribute prediction experiment on CelebA is:
-```bash
-python main.py --multitask [--other_arguments...]
-```
-
-### Landmark Detection
-To run the landmark detection baseline: (see the file for the complete list of arguments)
-```bash
-python landmark_detection/baseline.py
-```
-
-To run Fish for landmark detection: (see the file for the complete list of arguments)
-```bash
-python landmark_detection/fish.py
-```
-
-To run SWAD for landmark detection: (see the file for the complete list of arguments)
-```bash
-python landmark_detection/SWAD.py
-```
+## Introduction
+<i>Deep learning-based recognition systems are deployed at scale for several real-world applications that inevitably involve our social life. Although being of great support when making complex decisions, they might capture spurious data correlations and leverage sensitive attributes (e.g. age, gender, ethnicity). How to factor out this information while keeping a high prediction performance is a task with still several open questions, many of which are shared with those of the domain adaptation and generalization literature which focuses on avoiding visual domain biases. In this work, we propose an in-depth study of the relationship between cross-domain learning (CD) and model fairness by introducing a benchmark on face and medical images spanning several demographic groups as well as classification and localization tasks. After having highlighted the limits of the current evaluation metrics, we introduce a new </i>Harmonic Fairness (HF)<i> score to assess jointly how fair and accurate every model is with respect to a reference baseline. Our study covers 14 CD approaches alongside three state-of-the-art fairness algorithms and shows how the former can outperform the latter. Overall, our work paves the way for a more systematic analysis of fairness problems in computer vision.</i>
