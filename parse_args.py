@@ -41,9 +41,25 @@ def parse_arguments():
 
     if args.model_selection not in ref_metrics:
         raise ValueError(f'"{args.model_selection}" metric cannot be used for model selection in "{exp_type}"')
-        
+    
+    #! Solve metrics dependencies
+    current_tracked_metrics = args.tracked_metrics.copy()
+
+    def add_required_metrics(required_metrics, tracked_metrics):
+        for metric in required_metrics:
+            if metric not in tracked_metrics:
+                tracked_metrics.append(metric)
+                obj = eval(f'{exp_type}_meters.{metric}')
+                if hasattr(obj, 'required_metrics'):
+                    add_required_metrics(obj.required_metrics, tracked_metrics)
+
+    for metric in current_tracked_metrics:
+        obj = eval(f'{exp_type}_meters.{metric}')
+        if hasattr(obj, 'required_metrics'):
+            add_required_metrics(obj.required_metrics, current_tracked_metrics)
+
     #! Additional arguments
-    for metric in args.tracked_metrics:
+    for metric in current_tracked_metrics:
         obj = eval(f'{exp_type}_meters.{metric}')
 
         if hasattr(obj, 'additional_arguments'):
@@ -53,22 +69,8 @@ def parse_arguments():
 
     #! Set additional attributes of the current Namespace
     args.experiment_type = exp_type
+    args.tracked_metrics = current_tracked_metrics.copy()
 
-    #! Solve metrics dependencies
-    def add_required_metrics(required_metrics, tracked_metrics):
-        for metric in required_metrics:
-            if metric not in tracked_metrics:
-                tracked_metrics.append(metric)
-                obj = eval(f'{exp_type}_meters.{metric}')
-                if hasattr(obj, 'required_metrics'):
-                    add_required_metrics(obj.required_metrics, tracked_metrics)
-
-    for metric in args.tracked_metrics:
-        obj = eval(f'{exp_type}_meters.{metric}')
-        if hasattr(obj, 'required_metrics'):
-            add_required_metrics(obj.required_metrics, args.tracked_metrics)
-
-    
     #print(args)
     #exit()
 
