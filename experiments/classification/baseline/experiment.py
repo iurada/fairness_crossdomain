@@ -4,14 +4,19 @@ import torch.nn.functional as F
 from main import DEVICE
 from models.classification.ResNet50 import ResNet50
 
-class Pretrain:
-    def __init__(self):
-        pass
-
-    def start(self):
-        pass
-
 class Experiment:
+    data_config = {
+        'train': {'dataset': 'BaseDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
+        'val':   {'dataset': 'BaseDataset', 'set': 'val_set',   'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False},
+        'test':  {'dataset': 'BaseDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
+    }
+
+    def pretrain_setup(self, args):
+        pass
+
+    def pretrain(self):
+        pass
+
     def __init__(self, args):
         self.args = args
 
@@ -22,9 +27,13 @@ class Experiment:
 
         # Optimizer setup
         self.optimizer = Adam(self.model.parameters(), lr=1e-4)
+        self.scheduler = None #torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [45, 60], gamma=0.1)
 
         self.iteration = 0
         self.best_metric = 0.0
+
+        # Pretrain setup
+        self.pretrain_setup(args)
 
     def save(self, path, iteration, best_metric):
         self.iteration = iteration
@@ -45,7 +54,7 @@ class Experiment:
         self.best_metric = checkpoint['best_metric']
         return self.iteration, self.best_metric
 
-    def train_iteration(self, data):
+    def train_iteration(self, data, iteration):
         x, y, g = data
         x, y = x.to(DEVICE), y.to(DEVICE)
 

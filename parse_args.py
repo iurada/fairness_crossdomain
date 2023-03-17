@@ -13,13 +13,14 @@ def parse_arguments():
     parser.add_argument('--max_iters', type=int, help='Total number of training iterations.', required=True)
     parser.add_argument('--batch_size', type=int, help='Batch size passed to DataLoaders.', required=True)
     parser.add_argument('--num_workers', type=int, help='How many workers to spawn with DataLoaders.', required=True)
+    parser.add_argument('--pin_memory', action='store_true', help='DataLoader argument.')
 
     parser.add_argument('--validate_every', type=int, help='How frequently (in terms of number of iterations) to run validation.', required=True)
     parser.add_argument('--tracked_metrics', nargs='+', help='Which metrics to track. (See `metrics/` folder for the full list of collectible metrics)', required=True)
     parser.add_argument('--model_selection', type=str, help='Which metric to use for model selection. (See `metrics/` folder for the full list of collectible metrics)', required=True)
 
     parser.add_argument('--data_path', type=str, help='Folder where data is stored on disk.', required=True)
-    parser.add_argument('--log_path', type=str, help='Folder where to save logs and checkpoints.')
+    parser.add_argument('--log_path', type=str, help='Folder where to save logs and checkpoints.', default='')
 
     parser.add_argument('--cpu', action='store_true')
 
@@ -58,12 +59,28 @@ def parse_arguments():
         if hasattr(obj, 'required_metrics'):
             add_required_metrics(obj.required_metrics, current_tracked_metrics)
 
-    #! Additional arguments
+    #! [Metrics] Additional arguments
     for metric in current_tracked_metrics:
         obj = eval(f'{exp_type}_meters.{metric}')
 
         if hasattr(obj, 'additional_arguments'):
             obj.additional_arguments(parser)
+
+    #! [Datasets] Additional arguments
+    dset_name = os.path.normpath(args.dataset).split(os.sep)[2]
+    module_name = '.'.join(os.path.normpath(args.dataset).split(os.sep))
+    dataset_module = __import__(f'{module_name}.dataset', fromlist=[module_name])
+    obj = dataset_module
+    if hasattr(obj, 'additional_arguments'):
+        obj.additional_arguments(parser)
+
+    #! [Experiments] Additional arguments
+    exp_name = os.path.normpath(args.experiment).split(os.sep)[2]
+    module_name = '.'.join(os.path.normpath(args.experiment).split(os.sep))
+    experiment_module = __import__(f'{module_name}.experiment', fromlist=[module_name])
+    obj = experiment_module.Experiment
+    if hasattr(obj, 'additional_arguments'):
+        obj.additional_arguments(parser)
 
     args = parser.parse_args()
 
@@ -71,7 +88,10 @@ def parse_arguments():
     args.experiment_type = exp_type
     args.tracked_metrics = current_tracked_metrics.copy()
 
-    #print(args)
-    #exit()
+    # Set output path + name 
+    #TODO
+
+    print(args)
+    exit()
 
     return args

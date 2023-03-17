@@ -6,11 +6,10 @@ from metrics.utils import build_meters_dict, collect_metrics
 
 DEVICE = None
 
-def load_experiment(ctx, experiment):
-    module_name = '.'.join(os.path.normpath(experiment).split(os.sep))
+def load_experiment(args):
+    module_name = '.'.join(os.path.normpath(args.experiment).split(os.sep))
     experiment_module = __import__(f'{module_name}.experiment', fromlist=[module_name])
-    print(experiment)
-    #return experiment_module.Experiment(args)
+    return experiment_module.Experiment(args)
 
 def load_dataset(ctx, dataset):
     module_name = '.'.join(os.path.normpath(dataset).split(os.sep))
@@ -29,9 +28,13 @@ def main():
     if torch.cuda.is_available() and not args.cpu:
         DEVICE = torch.device('cuda:0')
 
+    experiment = load_experiment(args)
+
+    print(experiment)
+
+    exit()
     dataloaders = load_dataset(args)
     
-    experiment = load_experiment(args)
     
     iteration = 0
     best_metric = None
