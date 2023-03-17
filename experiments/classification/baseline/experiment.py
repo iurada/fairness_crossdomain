@@ -11,13 +11,7 @@ class Experiment:
         'test':  {'dataset': 'BaseDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
     }
 
-    def pretrain_setup(self, args):
-        pass
-
-    def pretrain(self):
-        pass
-
-    def __init__(self, args):
+    def __init__(self, args, dataloaders):
         self.args = args
 
         # Model setup
@@ -27,18 +21,11 @@ class Experiment:
 
         # Optimizer setup
         self.optimizer = Adam(self.model.parameters(), lr=1e-4)
-        self.scheduler = None #torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [45, 60], gamma=0.1)
 
         self.iteration = 0
         self.best_metric = 0.0
 
-        # Pretrain setup
-        self.pretrain_setup(args)
-
-    def save(self, path, iteration, best_metric):
-        self.iteration = iteration
-        self.best_metric = best_metric
-
+    def save(self, path):
         torch.save({
             'model': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
@@ -52,7 +39,6 @@ class Experiment:
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.iteration = checkpoint['iteration']
         self.best_metric = checkpoint['best_metric']
-        return self.iteration, self.best_metric
 
     def train_iteration(self, data, iteration):
         x, y, g = data

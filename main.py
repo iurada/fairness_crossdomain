@@ -1,78 +1,75 @@
 import os
 import torch
+import logging
 from parse_args import parse_arguments
-
 from metrics.utils import build_meters_dict, collect_metrics
+from datasets.utils import build_dataloaders
 
 DEVICE = None
 
-def load_experiment(args):
+def load_experiment(args, dataloaders):
     module_name = '.'.join(os.path.normpath(args.experiment).split(os.sep))
     experiment_module = __import__(f'{module_name}.experiment', fromlist=[module_name])
-    return experiment_module.Experiment(args)
-
-def load_dataset(ctx, dataset):
-    module_name = '.'.join(os.path.normpath(dataset).split(os.sep))
-    dataset_module = __import__(f'{module_name}.dataset', fromlist=[module_name])
-    print(dataset)
-    #return dataset_module.build_dataloaders(args)
-
-
+    return experiment_module.Experiment(args, dataloaders)
 
 def main():
     global DEVICE
 
     args = parse_arguments()
 
+    # Setup logger
+    logging.basicConfig(filename=os.path.join(args.log_path, 'log.txt'), format='%(message)s', level=logging.INFO, filemode='a')
+
     DEVICE = torch.device('cpu')
     if torch.cuda.is_available() and not args.cpu:
         DEVICE = torch.device('cuda:0')
 
-    experiment = load_experiment(args)
-
-    print(experiment)
-
-    exit()
-    dataloaders = load_dataset(args)
+    # Data setup
+    dataloaders = build_dataloaders(args)
     
-    
-    iteration = 0
-    best_metric = None
-    train_loss = None
+    # Experiments setup
+    experiment = load_experiment(args, dataloaders)
 
+    # Optionally Resume checkpoint
+    if os.path.exists(args.log_path):
+        experiment.load(os.path.join(args.log_path, 'current.pth'))
+    
     # Meters setup
     meters_dict = build_meters_dict(args)
 
     # Training Loop
-    while iteration < args.max_iter:
+    while experiment.iteration < args.max_iter:
 
         for data in dataloaders['train']:
 
-            if train_loss is None:
-                train_loss = experiment.train_iteration(data)
-            else:
-                train_loss += experiment.train_iteration(data)
+            train_losses = experiment.train_iteration(data)
 
-            if iteration % args.print_every:
-                pass
+            # Log losses eg. via wandb
+            logging.info(train_losses)
 
-            if iteration % args.validate_every:
+            # Validation phase
+            if experiment.iteration % args.validate_every:
                 predicted, target, group = experiment.evaluate(dataloaders['val'])
                 metrics = collect_metrics(meters_dict, predicted, target, group)
 
-                if meters_dict[args.tracked_metric].compare(metrics[args.tracked_metric], experiment.best_metric):
-                    experiment.best_metric = metrics[args.tracked_metric]
+                # Log metrics eg. via wandb
+                logging.info(f'[VAL @ {experiment.iteration}] {metrics}')
+
+                if experiment.best_metric is None or meters_dict[args.model_selection].compare(metrics[args.model_selection], experiment.best_metric):
+                    experiment.best_metric = metrics[args.model_selection]
+                    experiment.save(os.path.join(args.log_path, 'best.pth'))
+                experiment.save(os.path.join(args.log_path, 'current.pth'))
                 
-
-            iteration += 1
-            if iteration >= args.max_iter: break
-
-
+            experiment.iteration += 1
+            if experiment.iteration >= args.max_iter: break
     
+    # Test phase
+    experiment.load(os.path.join(args.log_path, 'best.pth'))
+    predicted, target, group = experiment.evaluate(dataloaders['test'])
+    metrics = collect_metrics(meters_dict, predicted, target, group)
 
-    
-
-    
+    # Log metrics eg. via wandb
+    logging.info(f'[TEST] {metrics}')
 
 if __name__ == '__main__':
     main()

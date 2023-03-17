@@ -91,7 +91,7 @@ def parse_arguments():
     # Set output path + name 
     #TODO
 
-    print(args)
-    exit()
+    #print(args)
+    #exit()
 
     return args
