@@ -22,8 +22,6 @@ def parse_arguments():
     parser.add_argument('--data_path', type=str, help='Folder where data is stored on disk.', required=True)
     parser.add_argument('--log_path', type=str, help='Folder where to save logs and checkpoints. Auto generates sub-folders if default value is used.', default='record')
 
-    parser.add_argument('--cpu', action='store_true')
-
     args, _ = parser.parse_known_args()
 
     #! Compatibility checks

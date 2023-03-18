@@ -5,7 +5,9 @@ from parse_args import parse_arguments
 from metrics.utils import build_meters_dict, collect_metrics
 from datasets.utils import build_dataloaders
 
-DEVICE = None
+DEVICE = torch.device('cpu')
+if torch.cuda.is_available():
+    DEVICE = torch.device('cuda:1')
 
 def load_experiment(args, dataloaders):
     module_name = '.'.join(os.path.normpath(args.experiment).split(os.sep))
@@ -20,10 +22,6 @@ def main():
     # Setup logger
     logging.basicConfig(filename=os.path.join(args.log_path, 'log.txt'), format='%(message)s', level=logging.INFO, filemode='a')
     logging.info(args)
-
-    DEVICE = torch.device('cpu')
-    if torch.cuda.is_available() and not args.cpu:
-        DEVICE = torch.device('cuda:0')
 
     # Data setup
     dataloaders = build_dataloaders(args)

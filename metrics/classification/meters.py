@@ -14,8 +14,8 @@ class Acc:
         predicted = torch.argmax(predicted, dim=-1)
         self.value = (predicted == target).sum().item() / predicted.size(0)
 
-        acc_gr0 = (predicted[:, 0][group[:, 0] == 0] == target[:, 0][group[:, 0] == 0]).sum().item() / predicted[:, 0][group[:, 0] == 0].size(0)
-        acc_gr1 = (predicted[:, 0][group[:, 0] == 1] == target[:, 0][group[:, 0] == 1]).sum().item() / predicted[:, 0][group[:, 0] == 1].size(0)
+        acc_gr0 = (predicted[group == 0] == target[group == 0]).sum().item() / predicted[group == 0].size(0)
+        acc_gr1 = (predicted[group == 1] == target[group == 1]).sum().item() / predicted[group == 1].size(0)
 
         if 'MGA' in self.meters_dict.keys():
             self.meters_dict['MGA'].value = max(acc_gr0, acc_gr1)
@@ -81,8 +81,8 @@ class HF:
         self.baseline_DA = args.baseline_DA
 
     def compute(self, predicted, target, group):
-        MGA = self.meters_dict['MGA'] * 100
-        DA = self.meters_dict['DA'] * 100
+        MGA = self.meters_dict['MGA'].value * 100
+        DA = self.meters_dict['DA'].value * 100
         a = (100 + MGA - self.baseline_MGA) / 2
         b = (100 + self.baseline_DA - DA) / 2
         self.value = (2 * a * b) / (a + b)
@@ -105,8 +105,8 @@ class DTO:
         self.value = None
 
     def compute(self, predicted, target, group):
-        MGA = self.meters_dict['MGA'] * 100
-        mGA = self.meters_dict['mGA'] * 100
+        MGA = self.meters_dict['MGA'].value * 100
+        mGA = self.meters_dict['mGA'].value * 100
         self.value = ((100 - MGA)**2 + (100 - mGA)**2)**0.5
         return self.value
 
@@ -123,8 +123,8 @@ class DeltaDTO:
         self.baseline_DTO = args.baseline_DTO
 
     def compute(self, predicted, target, group):
-        MGA = self.meters_dict['MGA'] * 100
-        mGA = self.meters_dict['mGA'] * 100
+        MGA = self.meters_dict['MGA'].value * 100
+        mGA = self.meters_dict['mGA'].value * 100
         self.value = self.baseline_DTO - ((100 - MGA)**2 + (100 - mGA)**2)**0.5
         return self.value
 
@@ -144,10 +144,11 @@ class DEO:
         self.deodds = None
 
     def compute(self, predicted, target, group):
-        target_gr0 = target[:, 0][group[:, 0] == 0]
-        target_gr1 = target[:, 0][group[:, 0] == 1]
-        predicted_gr0 = predicted[:, 0][group[:, 0] == 0]
-        predicted_gr1 = predicted[:, 0][group[:, 0] == 1]
+        predicted = torch.argmax(predicted, dim=-1)
+        target_gr0 = target[group == 0]
+        target_gr1 = target[group == 1]
+        predicted_gr0 = predicted[group == 0]
+        predicted_gr1 = predicted[group == 1]
 
         tn_0, fp_0, fn_0, tp_0 = confusion_matrix(
             target_gr0.numpy(), predicted_gr0.numpy()).ravel()

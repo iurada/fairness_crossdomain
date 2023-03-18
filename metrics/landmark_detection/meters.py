@@ -120,8 +120,8 @@ class DTO:
         self.value = None
 
     def compute(self, predicted, target, group):
-        MGS = self.meters_dict['MGS'] * 100
-        mGS = self.meters_dict['mGS'] * 100
+        MGS = self.meters_dict['MGS'].value * 100
+        mGS = self.meters_dict['mGS'].value * 100
         self.value = ((100 - MGS)**2 + (100 - mGS)**2)**0.5
         return self.value
 
@@ -138,8 +138,8 @@ class DeltaDTO:
         self.baseline_DTO = args.baseline_DTO
 
     def compute(self, predicted, target, group):
-        MGS = self.meters_dict['MGS'] * 100
-        mGS = self.meters_dict['mGS'] * 100
+        MGS = self.meters_dict['MGS'].value * 100
+        mGS = self.meters_dict['mGS'].value * 100
         self.value = self.baseline_DTO - ((100 - MGS)**2 + (100 - mGS)**2)**0.5
         return self.value
 
@@ -161,8 +161,8 @@ class HF:
         self.baseline_DS = args.baseline_DS
 
     def compute(self, predicted, target, group):
-        MGS = self.meters_dict['MGS'] * 100
-        DS = self.meters_dict['DS'] * 100
+        MGS = self.meters_dict['MGS'].value * 100
+        DS = self.meters_dict['DS'].value * 100
         a = (100 + MGS - self.baseline_MGS) / 2
         b = (100 + self.baseline_DS - DS) / 2
         self.value = (2 * a * b) / (a + b)
