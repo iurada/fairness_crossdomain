@@ -40,7 +40,7 @@ class Experiment:
         self.iteration = checkpoint['iteration']
         self.best_metric = checkpoint['best_metric']
 
-    def train_iteration(self, data, iteration):
+    def train_iteration(self, data):
         x, y, g = data
         x, y = x.to(DEVICE), y.to(DEVICE)
 

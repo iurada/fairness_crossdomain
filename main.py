@@ -38,19 +38,20 @@ def main():
     # Meters setup
     meters_dict = build_meters_dict(args)
 
-    exit()
+    #exit()
     # Training Loop
-    while experiment.iteration < args.max_iter:
+    while experiment.iteration < args.max_iters:
 
         for data in dataloaders['train']:
 
             train_losses = experiment.train_iteration(data)
 
             # Log losses eg. via wandb
-            logging.info(train_losses)
+            if experiment.iteration % (args.validate_every // 2) == 0:
+                logging.info(train_losses)
 
             # Validation phase
-            if experiment.iteration % args.validate_every:
+            if experiment.iteration % args.validate_every == 0:
                 predicted, target, group = experiment.evaluate(dataloaders['val'])
                 metrics = collect_metrics(meters_dict, predicted, target, group)
 
@@ -63,7 +64,7 @@ def main():
                 experiment.save(os.path.join(args.log_path, 'current.pth'))
                 
             experiment.iteration += 1
-            if experiment.iteration >= args.max_iter: break
+            if experiment.iteration >= args.max_iters: break
     
     # Test phase
     experiment.load(os.path.join(args.log_path, 'best.pth'))
