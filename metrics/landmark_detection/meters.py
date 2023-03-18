@@ -1,5 +1,4 @@
 import torch
-from metrics.utils import AbstractMeter
 import numpy as np
 
 # Remember to sort meters according to the computational order 
@@ -20,7 +19,7 @@ def compute_sdr(nmes, thres=0.08, step=0.0001):
     sdr = ys[-1]
     return sdr
 
-class SDR(AbstractMeter):
+class SDR:
 
     def __init__(self, args, meters_dict):
         self.meters_dict = meters_dict
@@ -70,7 +69,7 @@ class SDR(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class MGS(AbstractMeter):
+class MGS:
     required_metrics = ['SDR']
 
     def __init__(self, args, meters_dict):
@@ -84,7 +83,7 @@ class MGS(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class mGS(AbstractMeter):
+class mGS:
     required_metrics = ['SDR']
 
     def __init__(self, args, meters_dict):
@@ -98,7 +97,7 @@ class mGS(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class DS(AbstractMeter):
+class DS:
     required_metrics = ['MGS', 'mGS']
 
     def __init__(self, args, meters_dict):
@@ -113,7 +112,7 @@ class DS(AbstractMeter):
     def compare(current, best):
         return current < best
 
-class DTO(AbstractMeter):
+class DTO:
     required_metrics = ['MGS', 'mGS']
 
     def __init__(self, args, meters_dict):
@@ -130,7 +129,7 @@ class DTO(AbstractMeter):
     def compare(current, best):
         return current < best
 
-class DeltaDTO(AbstractMeter):
+class DeltaDTO:
     required_metrics = ['MGS', 'mGS']
 
     def __init__(self, args, meters_dict):
@@ -152,7 +151,7 @@ class DeltaDTO(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class HF(AbstractMeter):
+class HF:
     required_metrics = ['MGS', 'DS']
 
     def __init__(self, args, meters_dict):

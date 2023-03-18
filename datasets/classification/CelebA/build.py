@@ -18,15 +18,15 @@ def build_splits(args):
         # |-- list_attr_celeba.txt
         # |-- list_eval_partition.txt
 
+        assert args.target_attribute is not None, '[CelebA] --target_attribute not set.'
         if args.transfer_experiment is None:
-            assert args.target_attribute is not None, '[CelebA] --target_attribute not set.'
             assert args.protected_attribute is not None, '[CelebA] --protected_attribute not set.'
 
         val_begin_idx = 162770
         test_begin_idx = 182637
 
-        AGE = 39+1
-        GENDER = 20+1
+        AGE = 39
+        GENDER = 20
 
         protected_attribute_train = args.protected_attribute
         protected_attribute_val = args.protected_attribute

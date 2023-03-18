@@ -1,12 +1,11 @@
 import torch
-from metrics.utils import AbstractMeter
 from sklearn.metrics import confusion_matrix
 
 # Remember to sort meters according to the computational order 
 # -- This will be the full presentation order:
 METRICS_ORDER = ['Acc', 'MGA', 'mGA', 'DA', 'DEO', 'DEOdds', 'DTO', 'DeltaDTO', 'HF']
 
-class Acc(AbstractMeter):
+class Acc:
     def __init__(self, args, meters_dict):
         self.meters_dict = meters_dict
         self.value = None
@@ -29,7 +28,7 @@ class Acc(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class MGA(AbstractMeter):
+class MGA:
     required_metrics = ['Acc']
 
     def __init__(self, args, meters_dict):
@@ -43,7 +42,7 @@ class MGA(AbstractMeter):
     def compare(current, best):
         return current > best
     
-class mGA(AbstractMeter):
+class mGA:
     required_metrics = ['Acc']
 
     def __init__(self, args, meters_dict):
@@ -57,7 +56,7 @@ class mGA(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class DA(AbstractMeter):
+class DA:
     required_metrics = ['MGA', 'mGA']
 
     def __init__(self, args, meters_dict):
@@ -72,7 +71,7 @@ class DA(AbstractMeter):
     def compare(current, best):
         return current < best
 
-class HF(AbstractMeter):
+class HF:
     required_metrics = ['MGA', 'DA']
 
     def __init__(self, args, meters_dict):
@@ -98,7 +97,7 @@ class HF(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class DTO(AbstractMeter):
+class DTO:
     required_metrics = ['MGA', 'mGA']
 
     def __init__(self, args, meters_dict):
@@ -115,7 +114,7 @@ class DTO(AbstractMeter):
     def compare(current, best):
         return current < best
 
-class DeltaDTO(AbstractMeter):
+class DeltaDTO:
     required_metrics = ['MGA', 'mGA']
 
     def __init__(self, args, meters_dict):
@@ -137,7 +136,7 @@ class DeltaDTO(AbstractMeter):
     def compare(current, best):
         return current > best
 
-class DEO(AbstractMeter):
+class DEO:
 
     def __init__(self, args, meters_dict):
         self.meters_dict = meters_dict
@@ -169,7 +168,7 @@ class DEO(AbstractMeter):
     def compare(current, best):
         return current < best
 
-class DEOdds(AbstractMeter):
+class DEOdds:
     required_metrics = ['DEO']
 
     def __init__(self, args, meters_dict):

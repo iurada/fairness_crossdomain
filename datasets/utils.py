@@ -12,8 +12,6 @@ def build_dataloaders(args):
 
     # Load base_datasets & base_transforms module
     module_name = f'datasets.{args.experiment_type}'
-    base_datasets_module = __import__(f'{module_name}.base_datasets', fromlist=[module_name])
-    base_transforms_module = __import__(f'{module_name}.base_transforms', fromlist=[module_name])
 
     splits_dict = dataset_module.build_splits(args)
     data_config = experiment_module.Experiment.data_config
@@ -30,10 +28,12 @@ def build_dataloaders(args):
             examples_set = loader_config['filter'](examples_set)
 
         # Load Transform object
-        transform = eval(f'datasets.{args.experiment_type}.base_transforms.{loader_config["transform"]}()')
+        exec(f'from {module_name}.base_transforms import {loader_config["transform"]}')
+        transform = eval(f'{loader_config["transform"]}()')
 
         # Load Dataset object
-        dataset = eval(f'datasets.{args.experiment_type}.base_datasets.{loader_config["dataset"]}(examples_set, transform)')
+        exec(f'from {module_name}.base_datasets import {loader_config["dataset"]}')
+        dataset = eval(f'{loader_config["dataset"]}(examples_set, transform)')
 
         loaders[loader_name] = DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers, 
                                           pin_memory=args.pin_memory, shuffle=loader_config['shuffle'], 

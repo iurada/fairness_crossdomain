@@ -1,7 +1,7 @@
 python main.py^
  --experiment .\experiments\classification\baseline\^
  --dataset .\datasets\classification\CelebA\^
- --data_path data^
+ --data_path .\data\celeba\^
  --max_iters 46875^
  --batch_size 64^
  --num_workers 1^
@@ -10,4 +10,5 @@ python main.py^
  --model_selection HF^
  --baseline_MGA 0^
  --baseline_DA 100^
+ --target_attribute 3^
  --transfer_experiment age2gender

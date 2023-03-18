@@ -1,14 +1,13 @@
-class AbstractMeter:
-    def __init__(self, args, meters_dict):
-        raise NotImplementedError()
-    
-    def compute(self, predicted, target, group):
-        raise NotImplementedError()
-    
+
 def build_meters_dict(args):
-    meter_module = __import__(f'metrics.{args.experiment_type}.meters', fromlist=[f'metrics.{args.experiment_type}'])
-    order = meter_module.METRICS_ORDER
-    meters_dict = {k: eval(f'{meter_module}.{k}({args})') for k in order if k in args.tracked_metrics}
+    exec(f'from metrics.{args.experiment_type} import meters')
+    order = eval(f'meters.METRICS_ORDER')
+
+    meters_dict = {}
+    for k in order:
+        if k in args.tracked_metrics:
+            meters_dict[k] = eval(f'meters.{k}(args, meters_dict)')
+
     return meters_dict
 
 def collect_metrics(meters_dict, predicted, target, group):
