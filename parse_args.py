@@ -120,7 +120,5 @@ def parse_arguments():
         args.log_path = os.path.join(args.log_path, exp_type, folder_dset_name, folder_exp_name, f'run{run_nr}')
 
     os.makedirs(args.log_path, exist_ok=True)
-    #print(args)
-    #exit()
 
     return args

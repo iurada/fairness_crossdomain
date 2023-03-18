@@ -1,5 +1,5 @@
 python main.py^
- --experiment .\experiments\classification\baseline\^
+ --experiment .\experiments\classification\label_smoothing\^
  --dataset .\datasets\classification\CelebA\^
  --data_path .\data\celeba\^
  --max_iters 3000^

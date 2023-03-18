@@ -7,7 +7,7 @@ from datasets.utils import build_dataloaders
 
 DEVICE = torch.device('cpu')
 if torch.cuda.is_available():
-    DEVICE = torch.device('cuda:1')
+    DEVICE = torch.device('cuda:0')
 
 def load_experiment(args, dataloaders):
     module_name = '.'.join(os.path.normpath(args.experiment).split(os.sep))
@@ -36,7 +36,6 @@ def main():
     # Meters setup
     meters_dict = build_meters_dict(args)
 
-    #exit()
     # Training Loop
     while experiment.iteration < args.max_iters:
 
