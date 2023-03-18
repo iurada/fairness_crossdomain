@@ -49,11 +49,11 @@ def main():
 
             # Validation phase
             if experiment.iteration % args.validate_every == 0:
-                predicted, target, group = experiment.evaluate(dataloaders['val'])
+                predicted, target, group, avg_val_loss = experiment.evaluate(dataloaders['val'])
                 metrics = collect_metrics(meters_dict, predicted, target, group)
 
                 # Log metrics eg. via wandb
-                logging.info(f'[VAL @ {experiment.iteration}] {metrics}')
+                logging.info(f'[VAL @ {experiment.iteration}] {avg_val_loss} | {metrics}')
 
                 if experiment.best_metric is None or meters_dict[args.model_selection].compare(metrics[args.model_selection], experiment.best_metric):
                     experiment.best_metric = metrics[args.model_selection]

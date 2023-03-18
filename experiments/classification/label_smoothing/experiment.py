@@ -85,10 +85,14 @@ class Experiment:
         target = []
         group = []
 
+        cls_loss = 0
+
         for x, y, g in loader:
             x, y, g = x.to(DEVICE), y.to(DEVICE), g.to(DEVICE)
 
             pred, _ = self.model(x)
+
+            cls_loss += F.cross_entropy(pred, y).item()
 
             predicted.append(pred)
             target.append(y)
@@ -100,4 +104,4 @@ class Experiment:
 
         self.model.train()
         
-        return predicted, target, group
+        return predicted, target, group, {'classification_loss': cls_loss / predicted.size(0)}
