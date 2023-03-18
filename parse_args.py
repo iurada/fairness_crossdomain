@@ -20,7 +20,7 @@ def parse_arguments():
     parser.add_argument('--model_selection', type=str, help='Which metric to use for model selection. (See `metrics/` folder for the full list of collectible metrics)', required=True)
 
     parser.add_argument('--data_path', type=str, help='Folder where data is stored on disk.', required=True)
-    parser.add_argument('--log_path', type=str, help='Folder where to save logs and checkpoints.', default='')
+    parser.add_argument('--log_path', type=str, help='Folder where to save logs and checkpoints. Auto generates sub-folders if default value is used.', default='record')
 
     parser.add_argument('--cpu', action='store_true')
 
@@ -69,18 +69,20 @@ def parse_arguments():
     #! [Datasets] Additional arguments
     dset_name = os.path.normpath(args.dataset).split(os.sep)[2]
     module_name = '.'.join(os.path.normpath(args.dataset).split(os.sep))
-    dataset_module = __import__(f'{module_name}.dataset', fromlist=[module_name])
+    dataset_module = __import__(f'{module_name}.build', fromlist=[module_name])
     obj = dataset_module
+    dset_additional_args = None
     if hasattr(obj, 'additional_arguments'):
-        obj.additional_arguments(parser)
+        dset_additional_args = obj.additional_arguments(parser)
 
     #! [Experiments] Additional arguments
     exp_name = os.path.normpath(args.experiment).split(os.sep)[2]
     module_name = '.'.join(os.path.normpath(args.experiment).split(os.sep))
     experiment_module = __import__(f'{module_name}.experiment', fromlist=[module_name])
     obj = experiment_module.Experiment
+    exp_additional_args = None
     if hasattr(obj, 'additional_arguments'):
-        obj.additional_arguments(parser)
+        exp_additional_args = obj.additional_arguments(parser)
 
     args = parser.parse_args()
 
@@ -88,9 +90,38 @@ def parse_arguments():
     args.experiment_type = exp_type
     args.tracked_metrics = current_tracked_metrics.copy()
 
-    # Set output path + name 
-    #TODO
+    # Set output path + name
+    if args.log_path == 'record':
+        args_dict = vars(args)
 
+        folder_dset_name = dset_name
+        if dset_additional_args is not None:
+            dset_additional_args = [str(args_dict[d]) for d in dset_additional_args if args_dict[d] is not None]
+            if len(dset_additional_args) > 0:
+                folder_dset_name = f'{dset_name}_' + '_'.join(dset_additional_args)
+
+        folder_exp_name = exp_name
+        if exp_additional_args is not None:
+            exp_additional_args = [str(args_dict[d]) for d in exp_additional_args if args_dict[d] is not None]
+            if len(exp_additional_args) > 0:
+                folder_exp_name = f'{exp_name}_' + '_'.join(exp_additional_args)
+
+        runs_already_present = []
+        if os.path.exists(os.path.join(args.log_path, exp_type, folder_dset_name, folder_exp_name)):
+            items = os.listdir(os.path.join(args.log_path, exp_type, folder_dset_name, folder_exp_name))
+            for item in items:
+                if item.startswith('run'):
+                    files = os.listdir(os.path.join(args.log_path, exp_type, folder_dset_name, folder_exp_name, item))
+                    if 'log.txt' in files:
+                        runs_already_present.append(int(item[3]))
+
+        run_nr = 1
+        if len(runs_already_present) > 0:
+            run_nr = max(runs_already_present) + 1
+
+        args.log_path = os.path.join(args.log_path, exp_type, folder_dset_name, folder_exp_name, f'run{run_nr}')
+
+    os.makedirs(args.log_path, exist_ok=True)
     #print(args)
     #exit()
 

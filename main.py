@@ -19,6 +19,7 @@ def main():
 
     # Setup logger
     logging.basicConfig(filename=os.path.join(args.log_path, 'log.txt'), format='%(message)s', level=logging.INFO, filemode='a')
+    logging.info(args)
 
     DEVICE = torch.device('cpu')
     if torch.cuda.is_available() and not args.cpu:
@@ -31,12 +32,13 @@ def main():
     experiment = load_experiment(args, dataloaders)
 
     # Optionally Resume checkpoint
-    if os.path.exists(args.log_path):
+    if os.path.exists(os.path.join(args.log_path, 'current.pth')):
         experiment.load(os.path.join(args.log_path, 'current.pth'))
     
     # Meters setup
     meters_dict = build_meters_dict(args)
 
+    exit()
     # Training Loop
     while experiment.iteration < args.max_iter:
 

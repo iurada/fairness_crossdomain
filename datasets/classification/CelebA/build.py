@@ -5,6 +5,7 @@ def additional_arguments(parser):
     parser.add_argument('--target_attribute', type=int, choices=list(range(40)))
     parser.add_argument('--protected_attribute', type=int, choices=list(range(40)))
     parser.add_argument('--transfer_experiment', type=str, choices=['age2gender', 'gender2age', 'gender2gender', 'age2age'])
+    return ['target_attribute', 'protected_attribute', 'transfer_experiment']
 
 def build_splits(args):
     # args.data_path shall point to data/celeba

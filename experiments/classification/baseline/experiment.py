@@ -23,7 +23,7 @@ class Experiment:
         self.optimizer = Adam(self.model.parameters(), lr=1e-4)
 
         self.iteration = 0
-        self.best_metric = 0.0
+        self.best_metric = None
 
     def save(self, path):
         torch.save({
