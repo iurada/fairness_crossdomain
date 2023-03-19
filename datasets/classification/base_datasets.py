@@ -54,4 +54,30 @@ class BalanceGroupsDataset(Dataset):
         t_img = self.transform(Image.open(t_id))
 
         return s_img, s_targ, t_img, t_targ
+
+class RotationDataset(Dataset):
+
+    def __init__(self, examples, transform):
+        self.examples = examples
+        self.transform = transform
+
+        try:
+            self.interp = Image.Resampling.NEAREST
+        except AttributeError:
+            self.interp = Image.NEAREST
+
+    def __len__(self):
+        return len(self.examples)
+    
+    def __getitem__(self, index):
+        ID, y, g = self.examples[index]
+        img = Image.open(ID)
+        
+        y_rot = random.randint(0, 3)
+        img_rot = img.rotate(y_rot * 90, self.interp, expand=True)
+
+        X = self.transform(img)
+        X_rot = self.transform(img_rot)
+        
+        return X, y, X_rot, y_rot
     

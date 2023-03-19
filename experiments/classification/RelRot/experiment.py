@@ -2,46 +2,25 @@ import torch
 from torch.optim import Adam
 import torch.nn.functional as F
 from main import DEVICE
-from models.classification.ResNet50 import ResNet50
-
-def my_cdist(x1, x2):
-    x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)
-    x2_norm = x2.pow(2).sum(dim=-1, keepdim=True)
-    res = torch.addmm(x2_norm.transpose(-2, -1),
-                      x1,
-                      x2.transpose(-2, -1), alpha=-2).add_(x1_norm)
-    return res.clamp_min_(1e-30)
-
-def gaussian_kernel(x, y, gamma=[0.001, 0.01, 0.1, 1, 10, 100, 1000]):
-    D = my_cdist(x, y)
-    K = torch.zeros_like(D)
-    for g in gamma:
-        K.add_(torch.exp(D.mul(-g)))
-    return K
-
-def mmd(x, y):
-    Kxx = gaussian_kernel(x, x).mean()
-    Kyy = gaussian_kernel(y, y).mean()
-    Kxy = gaussian_kernel(x, y).mean()
-    return Kxx + Kyy - 2 * Kxy
+from models.classification.ResNet50_Rotation import ResNet50_Rotation
 
 class Experiment:
     data_config = {
-        'train': {'dataset': 'BalanceGroupsDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
+        'train': {'dataset': 'RotationDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
         'val':   {'dataset': 'BaseDataset', 'set': 'val_set',   'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False},
         'test':  {'dataset': 'BaseDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
     }
 
     @staticmethod
     def additional_arguments(parser):
-        parser.add_argument('--mmd_gamma', type=float, default=1.0)
-        return ['mmd_gamma']
+        parser.add_argument('--rotation_alpha', type=float, default=1.0)
+        return ['rotation_alpha']
 
     def __init__(self, args, dataloaders):
         self.args = args
 
         # Model setup
-        self.model = ResNet50()
+        self.model = ResNet50_Rotation()
         self.model.to(DEVICE)
         self.model.train()
 
@@ -67,20 +46,16 @@ class Experiment:
         self.best_metric = checkpoint['best_metric']
 
     def train_iteration(self, data):
-        images, targets, t_img, t_targ = data
+        images, targets, images_rot, targets_rot = data
         images, targets = images.to(DEVICE), targets.to(DEVICE)
-        t_img, t_targ = t_img.to(DEVICE), t_targ.to(DEVICE)
+        images_rot, targets_rot = images_rot.to(DEVICE), targets_rot.to(DEVICE)
 
-        output0, features0 = self.model(images)
-        output1, features1 = self.model(t_img)
+        outputs, outputs_rot = self.model(images, images_rot)
 
-        objective = torch.cat([
-            F.cross_entropy(output0, targets, reduction='none'), 
-            F.cross_entropy(output1, t_targ, reduction='none')]).mean()
-        penalty = mmd(features0, features1)
-        
-        loss = (objective + (self.args.mmd_gamma * penalty))
-        
+        loss_cls = F.cross_entropy(outputs.squeeze(), targets)
+        loss_rot = F.cross_entropy(outputs_rot.squeeze(), targets_rot)
+        loss = loss_cls + self.args.rotation_alpha * loss_rot
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
