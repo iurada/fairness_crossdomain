@@ -147,4 +147,4 @@ class Experiment:
 
         self.model.train()
         
-        return predicted, target, group, cls_loss / predicted.size(0)
+        return predicted, target, group, {'classification_loss': cls_loss / predicted.size(0)}
