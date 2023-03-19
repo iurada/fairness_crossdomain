@@ -1,5 +1,5 @@
 python main.py^
- --experiment .\experiments\classification\AFN\^
+ --experiment .\experiments\classification\MMD\^
  --dataset .\datasets\classification\CelebA\^
  --data_path .\data\celeba\^
  --max_iters 3000^
