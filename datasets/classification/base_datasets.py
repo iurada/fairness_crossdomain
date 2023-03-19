@@ -81,3 +81,45 @@ class RotationDataset(Dataset):
         
         return X, y, X_rot, y_rot
     
+class RotationAlignDataset(Dataset):
+
+    def __init__(self, examples, transform):
+        self.examples = examples
+        self.transform = transform
+
+        self.category = {0: {0: [], 1: []}, 1: {0: [], 1: []}}
+        for example in examples:
+            id = example[0]
+            attrib = example[1]
+            group = example[2]
+            self.category[group][attrib].append(id)
+
+        try:
+            self.interp = Image.Resampling.NEAREST
+        except AttributeError:
+            self.interp = Image.NEAREST
+
+    def __len__(self):
+        return len(self.examples)
+    
+    def __getitem__(self, index):
+        ID, y, g = self.examples[index]
+
+        pos_attrib = y
+        pos_group = g
+        neg_attrib = pos_attrib
+        neg_group = 0 if pos_group == 1 else 1
+
+        neg_ID = random.choice(self.category[neg_group][neg_attrib])
+
+        img = Image.open(ID)
+        neg_img = Image.open(neg_ID)
+        
+        y_rot = random.randint(0, 3)
+        img_rot = neg_img.rotate(y_rot * 90, self.interp, expand=True)
+
+        X = self.transform(img)
+        X_rot = self.transform(img_rot)
+        
+        return X, y, X_rot, y_rot
+    
