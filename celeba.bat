@@ -1,5 +1,5 @@
 python main.py^
- --experiment .\experiments\classification\SelfReg\^
+ --experiment .\experiments\classification\GroupDRO\^
  --dataset .\datasets\classification\CelebA\^
  --data_path .\data\celeba\^
  --max_iters 3000^
