@@ -9,6 +9,7 @@ def parse_arguments():
     #! General arguments
     parser.add_argument('--experiment', type=str, help='Path to the experiment folder to run.', required=True)
     parser.add_argument('--dataset', type=str, help='Path to the dataset folder to use.', required=True)
+    parser.add_argument('--test_mode', action='store_true', help='Skip Training.')
 
     parser.add_argument('--max_iters', type=int, help='Total number of training iterations.', required=True)
     parser.add_argument('--batch_size', type=int, help='Batch size passed to DataLoaders.', required=True)

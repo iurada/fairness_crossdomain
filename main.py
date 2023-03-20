@@ -37,7 +37,7 @@ def main():
     meters_dict = build_meters_dict(args)
 
     # Training Loop
-    while experiment.iteration < args.max_iters:
+    while experiment.iteration < args.max_iters and not args.test_mode:
 
         for data in dataloaders['train']:
 

@@ -1,0 +1,3 @@
+[submodule "experiments/classification/g_SMOTE/HyperInverter"]
+	path = experiments/classification/g_SMOTE/HyperInverter
+	url = https://github.com/VinAIResearch/HyperInverter.git

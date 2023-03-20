@@ -24,7 +24,7 @@ class Experiment:
     def __init__(self, args, dataloaders):
         self.args = args
 
-        if not args.fscl_skip_pretrain:
+        if not args.fscl_skip_pretrain or not args.test_mode:
             pretrain_ckpt_path = FSCL_pretraining(args, dataloaders['pretrain'])
             args.fscl_pretrain_ckpt = pretrain_ckpt_path
         
