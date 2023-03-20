@@ -1,5 +1,5 @@
 python main.py^
- --experiment .\experiments\classification\FSCL\^
+ --experiment .\experiments\classification\SWAD\^
  --dataset .\datasets\classification\CelebA\^
  --data_path .\data\celeba\^
  --max_iters 3000^
