@@ -122,4 +122,25 @@ class RotationAlignDataset(Dataset):
         X_rot = self.transform(img_rot)
         
         return X, y, X_rot, y_rot
+
+class AugmentedDataset(Dataset):
+
+    def __init__(self, examples, transform, aug_examples=[], lam=0.5):
+        self.examples = examples
+        self.aug_examples = examples + aug_examples
+        random.shuffle(self.aug_examples)
+        self.transform = transform
+        self.lam = lam
+
+    def __len__(self):
+        return len(self.examples)
+    
+    def __getitem__(self, index):
+        list_examples = self.aug_examples
+        if random.random() < self.lam:
+            list_examples = self.examples
+        img_path, y, g = list_examples[index]
+        x = Image.open(img_path).convert('RGB')
+        x = self.transform(x)
+        return x, y, g
     

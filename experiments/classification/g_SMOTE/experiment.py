@@ -1,3 +1,4 @@
+import os
 import torch
 from torch.optim import Adam
 import torch.nn.functional as F
@@ -9,6 +10,8 @@ import pickle
 import random
 from main import DEVICE
 from models.classification.ResNet50 import ResNet50
+from datasets.classification.base_datasets import AugmentedDataset
+from datasets.classification.base_transforms import BaseTrainTransform
 from experiments.classification.g_SMOTE.HyperInverter.configs import paths_config
 from experiments.classification.g_SMOTE.HyperInverter.models.stylegan2_ada import Generator
 from experiments.classification.g_SMOTE.HyperInverter.evaluation.latent_creators import HyperInverterLatentCreator
@@ -85,7 +88,7 @@ def GAN_based_SMOTE(encoded_basepoint, encoded_train_set, m=5, k=3):
 
 class Experiment:
     data_config = {
-        'train': {'dataset': 'BaseDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
+        'train': {'dataset': 'AugmentedDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
         'val':   {'dataset': 'BaseDataset', 'set': 'val_set',   'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False},
         'test':  {'dataset': 'BaseDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
     }
@@ -95,14 +98,15 @@ class Experiment:
         parser.add_argument('--aug_path', type=str, help='Where augmented images get stored.', required=True)
         parser.add_argument('--gen_size', type=int, default=128) # (N x N) output image size
         parser.add_argument('--adaptive', type=bool, default=True)
-        parser.add_argument('--lambda', type=float, default=0.5)
+        parser.add_argument('--lambd', type=float, default=0.5)
         parser.add_argument('--m', type=int, default=5)
         parser.add_argument('--k', type=int, default=3)
-        return ['lambda', 'm', 'k']
+        return ['lambd', 'm', 'k']
 
     def __init__(self, args, dataloaders):
         self.args = args
         self.dataloaders = dataloaders
+        self.dataloaders['train'].dataset.lam = args.lambd
 
         # HyperInverter model setup
         model_path = paths_config.model_paths['stylegan2_ada_ffhq']
@@ -126,6 +130,11 @@ class Experiment:
 
         self.iteration = 0
         self.best_metric = None
+
+        self.aug_list = []
+        if not args.test_mode:
+            self.train_list_index, self.encoded_trainset = build_index(self.dataloaders['train'].dataset.examples, 
+                                                                       self.latent_creator)
 
     def save(self, path):
         torch.save({
@@ -182,46 +191,51 @@ class Experiment:
         for _ in range(self.args.batch_size):
             attr = 0 if random.random() < 0.5 else 1
             if attr == 0:
-                ii = random.choice(list(set(range(len(train_list_index[weakest_group][attr]))) - set(idxs_already_included0)))
+                ii = random.choice(list(set(range(len(self.train_list_index[weakest_group][attr]))) - set(idxs_already_included0)))
                 idxs_already_included0.append(ii)
-                name = train_list_index[weakest_group][attr][ii]
+                name = self.train_list_index[weakest_group][attr][ii]
                 aug_batch.append([name, attr, weakest_group])
             else:
-                ii = random.choice(list(set(range(len(train_list_index[weakest_group][attr]))) - set(idxs_already_included1)))
+                ii = random.choice(list(set(range(len(self.train_list_index[weakest_group][attr]))) - set(idxs_already_included1)))
                 idxs_already_included1.append(ii)
-                name = train_list_index[weakest_group][attr][ii]
+                name = self.train_list_index[weakest_group][attr][ii]
                 aug_batch.append([name, attr, weakest_group])
         
         # Augment the batch
         split0 = []
         split1 = []
-        for k in train_list_index[weakest_group][0]:
-            split0.append(encoded_trainset[k])
-        for k in train_list_index[weakest_group][1]:
-            split1.append(encoded_trainset[k])
+        for k in self.train_list_index[weakest_group][0]:
+            split0.append(self.encoded_trainset[k])
+        for k in self.train_list_index[weakest_group][1]:
+            split1.append(self.encoded_trainset[k])
         split0 = torch.cat(split0)
         split1 = torch.cat(split1)
 
         for name, attr, prot_attr in aug_batch:
-            encoded_basepoint = encoded_trainset[name]
+            encoded_basepoint = self.encoded_trainset[name]
             encoded_split = split0 if attr == 0 else split1
-            sample = GAN_based_SMOTE(encoded_basepoint, encoded_split, m=opt['m'], k=opt['k']).to(device)
-            generated_img = G.synthesis(sample, added_weights=None, noise_mode="const")[0]
-            generated_img = tensor2im(generated_img).resize((opt['gen_size'], opt['gen_size']))
+            sample = GAN_based_SMOTE(encoded_basepoint, encoded_split, m=self.args.m, k=self.args.k).to(DEVICE)
+            generated_img = self.G.synthesis(sample, added_weights=None, noise_mode="const")[0]
+            generated_img = tensor2im(generated_img).resize((self.args.gen_size, self.args.gen_size))
             
-            out_name = f"{opt['aug_path']}{opt['attribute']}/{attr}_{prot_attr}_{g_smote_filecount}.png"
+            out_name = os.path.join(self.args.aug_path, f'{attr}_{prot_attr}_{g_smote_filecount}.png')
             generated_img.save(out_name)
             g_smote_filecount += 1
 
-            aug_list.append([out_name, attr, prot_attr])
+            self.aug_list.append([out_name, attr, prot_attr])
 
         # Rebuild train loader
         train_loader = DataLoader(
-            TrainAugDataset(train_list, aug_list, transform_train, opt['lambda']),
-            batch_size=opt['batch_size'],
+            AugmentedDataset(
+                self.dataloaders['train'].dataset.examples, 
+                self.aug_list, 
+                BaseTrainTransform().build_transform(), 
+                self.args.lambd),
+            batch_size=self.args.batch_size,
             shuffle=True,
-            num_workers=opt['num_workers']
+            num_workers=self.args.num_workers
         )
+        self.dataloaders['train'] = train_loader
 
     @torch.no_grad()
     def evaluate(self, loader):
