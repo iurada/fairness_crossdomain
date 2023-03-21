@@ -1,0 +1,5 @@
+*
+!.gitignore
+!utk*train.txt
+!utk*val.txt
+!utk*test.txt

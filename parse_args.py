@@ -13,6 +13,7 @@ def parse_arguments():
 
     parser.add_argument('--max_iters', type=int, help='Total number of training iterations.', required=True)
     parser.add_argument('--batch_size', type=int, help='Batch size passed to DataLoaders.', required=True)
+    parser.add_argument('--image_size', type=int, help='Input image size to use.', required=True)
     parser.add_argument('--num_workers', type=int, help='How many workers to spawn with DataLoaders.', required=True)
     parser.add_argument('--pin_memory', action='store_true', help='DataLoader argument.')
 

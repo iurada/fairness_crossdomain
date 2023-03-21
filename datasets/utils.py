@@ -29,7 +29,7 @@ def build_dataloaders(args):
 
         # Load Transform object
         exec(f'from {module_name}.base_transforms import {loader_config["transform"]}')
-        transform = eval(f'{loader_config["transform"]}().build_transform()')
+        transform = eval(f'{loader_config["transform"]}().build_transform(args)')
 
         # Load Dataset object
         exec(f'from {module_name}.base_datasets import {loader_config["dataset"]}')
