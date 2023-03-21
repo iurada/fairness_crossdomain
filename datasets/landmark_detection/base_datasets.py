@@ -65,15 +65,16 @@ def generate_target(joints, joints_vis, heatmap_size, sigma, image_size):
 
     return target, target_weight
     
-class BaseDataset(Dataset):
+class BaseTrainDataset(Dataset):
 
-    def __init__(self, examples, transform, heatmap_size=None, image_size=None):
+    def __init__(self, examples, transform, heatmap_size=None, image_size=None, landmarks_count=68):
         # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
         # transform is a torchvision.transforms.Compose(...)
         self.examples = examples
         self.transform_lm, self.transform = transform
         self.heatmap_size = heatmap_size
         self.image_size = image_size
+        self.landmarks_count = landmarks_count
 
         group0 = []
         group1 = []
@@ -109,7 +110,7 @@ class BaseDataset(Dataset):
         s_img = self.transform(Image.fromarray(s_img))
         t_img = self.transform(Image.fromarray(t_img))
 
-        visible = np.ones((68, ), dtype=np.float32)
+        visible = np.ones((self.landmarks_count, ), dtype=np.float32)
         visible = visible[:, np.newaxis]
 
         # 2D Heatmap
@@ -122,3 +123,36 @@ class BaseDataset(Dataset):
         t_targ_weight = torch.from_numpy(t_targ_weight)
 
         return s_img, s_targ, s_targ_weight, t_img, t_targ, t_targ_weight
+    
+class BaseTestDataset(Dataset):
+
+    def __init__(self, examples, transform, heatmap_size=None, image_size=None, landmarks_count=68):
+        # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
+        # transform is a torchvision.transforms.Compose(...)
+        self.examples = examples
+        self.transform_lm, self.transform = transform
+        self.heatmap_size = heatmap_size
+        self.image_size = image_size
+        self.landmarks_count = landmarks_count
+
+    def __len__(self):
+        return len(self.examples)
+
+    def __getitem__(self, index):
+        id, targ, group = self.examples[index]
+
+        img = Image.open(id).convert('RGB')
+        
+        img, targ = self.transform_lm(np.array(img, dtype=np.uint8), np.array(targ).reshape(-1, 2))
+
+        img = self.transform(Image.fromarray(img))
+
+        visible = np.ones((self.landmarks_count, ), dtype=np.float32)
+        visible = visible[:, np.newaxis]
+
+        # 2D Heatmap
+        targ, targ_weight = generate_target(targ, visible, self.heatmap_size, 2, self.image_size)
+        targ = torch.from_numpy(targ)
+        targ_weight = torch.from_numpy(targ_weight)
+
+        return img, targ, targ_weight, group
