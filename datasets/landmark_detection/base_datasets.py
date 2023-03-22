@@ -65,15 +65,15 @@ def generate_target(joints, joints_vis, heatmap_size, sigma, image_size):
 
     return target, target_weight
     
-class BaseTrainDataset(Dataset):
+class BaseBalancedDataset(Dataset):
 
     def __init__(self, examples, transform, args):
         # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
         # transform is a torchvision.transforms.Compose(...)
         self.examples = examples
         self.transform_lm, self.transform = transform
-        self.heatmap_size = args.heatmap_size
-        self.image_size = args.image_size
+        self.heatmap_size = (args.heatmap_size, args.heatmap_size)
+        self.image_size = (args.image_size, args.image_size)
         self.landmarks_count = args.landmarks_count
 
         group0 = []
@@ -124,15 +124,15 @@ class BaseTrainDataset(Dataset):
 
         return s_img, s_targ, s_targ_weight, t_img, t_targ, t_targ_weight
     
-class BaseTestDataset(Dataset):
+class BaseDataset(Dataset):
 
     def __init__(self, examples, transform, args):
         # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
         # transform is a torchvision.transforms.Compose(...)
         self.examples = examples
         self.transform_lm, self.transform = transform
-        self.heatmap_size = args.heatmap_size
-        self.image_size = args.image_size
+        self.heatmap_size = (args.heatmap_size, args.heatmap_size)
+        self.image_size = (args.image_size, args.image_size)
         self.landmarks_count = args.landmarks_count
 
     def __len__(self):
@@ -151,8 +151,8 @@ class BaseTestDataset(Dataset):
         visible = visible[:, np.newaxis]
 
         # 2D Heatmap
-        targ, targ_weight = generate_target(targ, visible, self.heatmap_size, 2, self.image_size)
-        targ = torch.from_numpy(targ)
+        targ_map, targ_weight = generate_target(targ, visible, self.heatmap_size, 2, self.image_size)
+        targ_map = torch.from_numpy(targ_map)
         targ_weight = torch.from_numpy(targ_weight)
 
-        return img, targ, targ_weight, group
+        return img, targ_map, targ_weight, group, targ

@@ -1,32 +1,31 @@
 import torch
-from torch.optim import Adam
+from torch.optim import SGD
+from torch.optim.lr_scheduler import MultiStepLR
 import torch.nn.functional as F
 from main import DEVICE
-from models.classification.ResNet50 import ResNet50
+from models.landmark_detection.ResNet18 import pose_resnet18
+from experiments.landmark_detection.losses import JointsMSELoss
 
 class Experiment:
     data_config = {
-        'train': {'dataset': 'BaseTrainDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
-        'val':   {'dataset': 'BaseTestDataset', 'set': 'val_set',   'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False},
-        'test':  {'dataset': 'BaseTestDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
+        'train': {'dataset': 'BaseDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
+        'val':   {'dataset': 'BaseDataset', 'set': 'val_set',   'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False},
+        'test':  {'dataset': 'BaseDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
     }
 
     def __init__(self, args, dataloaders):
         self.args = args
 
-        # Landmark Dataset setup
-        for k in ['train', 'val', 'test']:
-            dataloaders[k].dataset.heatmap_size = args.heatmap_size
-            dataloaders[k].dataset.image_size = args.image_size
-            dataloaders[k].dataset.landmarks_count = args.landmarks_count
-
         # Model setup
-        self.model = ResNet50()
+        self.model = pose_resnet18(args.image_size, args.num_keypoints, pretrained_backbone=True)
         self.model.to(DEVICE)
         self.model.train()
 
+        self.criterion = JointsMSELoss()
+
         # Optimizer setup
-        self.optimizer = Adam(self.model.parameters(), lr=1e-4)
+        self.optimizer = SGD(self.model.get_parameters(lr=0.1), momentum=0.9, weight_decay=0.0001, nesterov=True)
+        self.scheduler = MultiStepLR(self.optimizer, [45, 60], gamma=0.1)
 
         self.iteration = 0
         self.best_metric = None
@@ -35,6 +34,7 @@ class Experiment:
         torch.save({
             'model': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
+            'scheduler': self.scheduler.state_dict(),
             'iteration': self.iteration,
             'best_metric': self.best_metric
         }, path)
@@ -43,16 +43,19 @@ class Experiment:
         checkpoint = torch.load(path)
         self.model.load_state_dict(checkpoint['model'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.scheduler.load_state_dict(checkpoint['scheduler'])
         self.iteration = checkpoint['iteration']
         self.best_metric = checkpoint['best_metric']
 
     def train_iteration(self, data):
-        x, y, g = data
-        x, y = x.to(DEVICE), y.to(DEVICE)
+        if self.iteration % self.args.validate_every == 0 and self.iteration > 0:
+            self.scheduler.step()
 
-        pred, _ = self.model(x)
+        img, targ, targ_weight, group, lms = data
+        img, targ, targ_weight = img.to(DEVICE), targ.to(DEVICE), targ_weight.to(DEVICE)
 
-        loss = F.cross_entropy(pred, y)
+        pred = self.model(img)
+        loss = self.criterion(pred, targ, targ_weight)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -68,18 +71,18 @@ class Experiment:
         target = []
         group = []
 
-        cls_loss = 0
+        loss = 0
 
-        for x, y, g in loader:
-            x, y, g = x.to(DEVICE), y.to(DEVICE), g.to(DEVICE)
+        for img, targ, targ_weight, group, lms in loader:
+            img, targ, targ_weight = img.to(DEVICE), targ.to(DEVICE), targ_weight.to(DEVICE)
 
-            pred, _ = self.model(x)
+            pred = self.model(img)
 
-            cls_loss += F.cross_entropy(pred, y).item()
+            loss += self.criterion(pred, targ).item()
 
             predicted.append(pred)
-            target.append(y)
-            group.append(g)
+            target.append(lms)
+            group.append(group)
         
         predicted = torch.cat(predicted)
         target = torch.cat(target)
@@ -87,4 +90,4 @@ class Experiment:
 
         self.model.train()
         
-        return predicted, target, group, {'classification_loss': cls_loss / predicted.size(0)}
+        return predicted, target, group, {'loss': loss / predicted.size(0)}
