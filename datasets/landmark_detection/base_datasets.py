@@ -65,7 +65,7 @@ def generate_target(joints, joints_vis, heatmap_size, sigma, image_size):
 
     return target, target_weight
     
-class BaseBalancedDataset(Dataset):
+class BalanceGroupsDataset(Dataset):
 
     def __init__(self, examples, transform, args):
         # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
