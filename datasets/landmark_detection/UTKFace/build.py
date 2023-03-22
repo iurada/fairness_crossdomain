@@ -4,7 +4,9 @@ import numpy as np
 
 def additional_arguments(parser):
     parser.add_argument('--experiment', type=str, choices=['age', 'skintone', 'age2skin', 'skin2age', 'skin2skin', 'age2age'], default='skintone')
-    return ['experiment']
+    parser.add_argument('--heatmap_size', type=int, default=56)
+    parser.add_argument('--landmarks_count', type=int, default=68)
+    return ['experiment', 'heatmap_size', 'landmarks_count']
 
 def build_splits(args):
     # args.data_path shall point to data/utkface

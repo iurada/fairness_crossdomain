@@ -4,7 +4,7 @@ import random
 
 class BaseDataset(Dataset):
 
-    def __init__(self, examples, transform):
+    def __init__(self, examples, transform, args):
         # examples is a list of [img_id(path), target(int), group(int)]
         # transform is a torchvision.transforms.Compose(...)
         self.examples = examples
@@ -21,7 +21,7 @@ class BaseDataset(Dataset):
     
 class BalanceGroupsDataset(Dataset):
 
-    def __init__(self, examples, transform):
+    def __init__(self, examples, transform, args):
         self.examples = examples
         self.transform = transform
 
@@ -57,7 +57,7 @@ class BalanceGroupsDataset(Dataset):
 
 class RotationDataset(Dataset):
 
-    def __init__(self, examples, transform):
+    def __init__(self, examples, transform, args):
         self.examples = examples
         self.transform = transform
 
@@ -83,7 +83,7 @@ class RotationDataset(Dataset):
     
 class RotationAlignDataset(Dataset):
 
-    def __init__(self, examples, transform):
+    def __init__(self, examples, transform, args):
         self.examples = examples
         self.transform = transform
 
@@ -125,7 +125,7 @@ class RotationAlignDataset(Dataset):
 
 class AugmentedDataset(Dataset):
 
-    def __init__(self, examples, transform, aug_examples=[], lam=0.5):
+    def __init__(self, examples, transform, args, aug_examples=[], lam=0.5):
         self.examples = examples
         self.aug_examples = examples + aug_examples
         random.shuffle(self.aug_examples)

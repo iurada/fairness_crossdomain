@@ -33,7 +33,7 @@ def build_dataloaders(args):
 
         # Load Dataset object
         exec(f'from {module_name}.base_datasets import {loader_config["dataset"]}')
-        dataset = eval(f'{loader_config["dataset"]}(examples_set, transform)')
+        dataset = eval(f'{loader_config["dataset"]}(examples_set, transform, args)')
 
         loaders[loader_name] = DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers, 
                                           pin_memory=args.pin_memory, shuffle=loader_config['shuffle'], 

@@ -67,14 +67,14 @@ def generate_target(joints, joints_vis, heatmap_size, sigma, image_size):
     
 class BaseTrainDataset(Dataset):
 
-    def __init__(self, examples, transform, heatmap_size=None, image_size=None, landmarks_count=68):
+    def __init__(self, examples, transform, args):
         # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
         # transform is a torchvision.transforms.Compose(...)
         self.examples = examples
         self.transform_lm, self.transform = transform
-        self.heatmap_size = heatmap_size
-        self.image_size = image_size
-        self.landmarks_count = landmarks_count
+        self.heatmap_size = args.heatmap_size
+        self.image_size = args.image_size
+        self.landmarks_count = args.landmarks_count
 
         group0 = []
         group1 = []
@@ -126,14 +126,14 @@ class BaseTrainDataset(Dataset):
     
 class BaseTestDataset(Dataset):
 
-    def __init__(self, examples, transform, heatmap_size=None, image_size=None, landmarks_count=68):
+    def __init__(self, examples, transform, args):
         # examples is a list of [img_id(path), target_landmarks(list[int]), group(int)]
         # transform is a torchvision.transforms.Compose(...)
         self.examples = examples
         self.transform_lm, self.transform = transform
-        self.heatmap_size = heatmap_size
-        self.image_size = image_size
-        self.landmarks_count = landmarks_count
+        self.heatmap_size = args.heatmap_size
+        self.image_size = args.image_size
+        self.landmarks_count = args.landmarks_count
 
     def __len__(self):
         return len(self.examples)

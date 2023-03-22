@@ -229,6 +229,7 @@ class Experiment:
             AugmentedDataset(
                 self.dataloaders['train'].dataset.examples, 
                 self.aug_list, 
+                self.args,
                 BaseTrainTransform().build_transform(), 
                 self.args.lambd),
             batch_size=self.args.batch_size,
