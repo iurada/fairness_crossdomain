@@ -3,7 +3,7 @@ from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR
 import torch.nn.functional as F
 from main import DEVICE
-from models.landmark_detection.ResNet18 import pose_resnet18
+from models.landmark_detection.ResNet18 import pose_resnet18_DANN
 from experiments.landmark_detection.losses import JointsMSELoss
 import math
 
@@ -20,23 +20,21 @@ def get_L2norm_loss_self_driven(x, args):
 
 class Experiment:
     data_config = {
-        'train': {'dataset': 'BalanceGroupsDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
+        'train': {'dataset': 'BaseDataset', 'set': 'train_set', 'transform': 'BaseTrainTransform', 'filter': None, 'shuffle': True,  'drop_last': False},
         'val':   {'dataset': 'BaseDataset', 'set': 'val_set',   'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False},
         'test':  {'dataset': 'BaseDataset', 'set': 'test_set',  'transform': 'BaseTestTransform',  'filter': None, 'shuffle': False, 'drop_last': False}
     }
 
     @staticmethod
     def additional_arguments(parser):
-        parser.add_argument('--afn_type', type=str, choices=['HAFN', 'SAFN'], default='HAFN')
-        parser.add_argument('--afn_radius', type=float, default=25.0)
-        parser.add_argument('--afn_weight_L2norm', type=float, default=0.05)
-        return ['afn_type', 'afn_radius', 'afn_weight_L2norm']
+        parser.add_argument('--dann_lambda', type=float, default=1.0)
+        return ['dann_lambda']
 
     def __init__(self, args, dataloaders):
         self.args = args
 
         # Model setup
-        self.model = pose_resnet18(args.image_size, args.num_keypoints, pretrained_backbone=True)
+        self.model = pose_resnet18_DANN(args.image_size, args.num_keypoints, pretrained_backbone=True)
         self.model.to(DEVICE)
         self.model.train()
 
@@ -70,31 +68,29 @@ class Experiment:
         if self.iteration % self.args.validate_every == 0 and self.iteration > 0:
             self.scheduler.step()
 
-        s_img, s_targ, s_targ_weight, t_img, t_targ, t_targ_weight = data
+        img, targ, targ_weight, group, lms = data
 
-        s_img, s_targ, s_weight = s_img.to(DEVICE), s_targ.to(DEVICE), s_targ_weight.to(DEVICE)
-        t_img, t_targ, t_weight = t_img.to(DEVICE), t_targ.to(DEVICE), t_targ_weight.to(DEVICE)
+        img, targ, weight = img.to(DEVICE), targ.to(DEVICE), targ_weight.to(DEVICE)
 
-        s_bottleneck = self.model.backbone(s_img) * math.sqrt(0.5)
-        t_bottleneck = self.model.backbone(t_img) * math.sqrt(0.5)
+        dom_labels = torch.zeros((img.size(0), 2))
+        dom_labels[group == 0, 0] = 1
+        dom_labels[group == 1, 1] = 1
+        dom_labels = dom_labels.to(DEVICE)
 
-        s_emb = self.model.upsampling(s_bottleneck)
-        t_emb = self.model.upsampling(t_bottleneck)
-        y_s = self.model.head(s_emb)
-        y_t = self.model.head(t_emb)
+        z = self.model.backbone(img)
+        dom_pred = self.model.discriminator(self.model.discriminator.preprocess(z))
+        pred = self.model.head(self.model.upsampling(z))
 
-        s_loss = self.criterion(y_s, s_targ, s_weight)
-        t_loss = self.criterion(y_t, t_targ, t_weight)
-        s_L2norm_loss = get_L2norm_loss_self_driven(s_emb, self.args)
-        t_L2norm_loss = get_L2norm_loss_self_driven(t_emb, self.args)
+        disc_loss = F.cross_entropy(dom_pred, dom_labels)
+        lm_loss = self.criterion(pred, targ, weight)
 
-        loss = s_loss + t_loss + s_L2norm_loss + t_L2norm_loss
+        loss = lm_loss - self.args.dann_lambda * disc_loss
         
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
-        return {'train_loss': loss.item()}
+        return {'lm_loss': lm_loss.item(), 'disc_loss': disc_loss.item()}
 
     @torch.no_grad()
     def evaluate(self, loader):

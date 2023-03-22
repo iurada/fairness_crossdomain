@@ -78,7 +78,7 @@ class Experiment:
 
             pred = self.model(img)
 
-            loss += self.criterion(pred, targ).item()
+            loss += self.criterion(pred, targ, targ_weight).item()
 
             predicted.append(pred)
             target.append(lms)
