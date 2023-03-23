@@ -80,7 +80,7 @@ class Experiment:
 
             loss += self.criterion(pred, targ, targ_weight).item()
 
-            predicted.append(pred)
+            predicted.append(pred * self.args.image_size / self.args.heatmap_size)
             target.append(lms)
             group.append(group)
         

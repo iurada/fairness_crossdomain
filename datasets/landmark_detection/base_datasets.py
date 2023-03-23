@@ -85,17 +85,11 @@ class BalanceGroupsDataset(Dataset):
             else:
                 group1.append(example)
 
-        self.dataset_len = max(len(group0), len(group1))
-
-        if len(group0) > len(group1):
-            self.source = group0
-            self.target = group1
-        else:
-            self.source = group1
-            self.target = group0
+        self.source = group0
+        self.target = group1
 
     def __len__(self):
-        return self.dataset_len
+        return len(self.source)
 
     def __getitem__(self, index):
         s_id, s_targ, _ = self.source[index]
