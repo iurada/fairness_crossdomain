@@ -133,8 +133,8 @@ class Experiment:
         # Save a checkpoint for the experiment (called at the end of each validation, will save both the best and last checkpoints)
         torch.save({
             'model': self.model.state_dict(),
-            'iteration' = self.iteration,
-            'best_metric' = self.best_metric,
+            'iteration': self.iteration,
+            'best_metric': self.best_metric,
             ...
         }, path)
 
