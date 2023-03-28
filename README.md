@@ -198,4 +198,11 @@ class Experiment:
 NOTE: additional models shall go inside the `models/<task-name>` folder
 
 # Citation
-[To be added soon!]
+```
+@article{iurada2023fairness,
+      title={Fairness meets Cross-Domain Learning: a new perspective on Models and Metrics}, 
+      author={Leonardo Iurada and Silvia Bucci and Timothy M. Hospedales and Tatiana Tommasi},
+      journal={arXiv preprint arXiv:2303.14411},
+      year={2023}
+}
+```
