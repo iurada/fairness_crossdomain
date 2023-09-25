@@ -202,7 +202,7 @@ NOTE: additional models shall go inside the `models/<task-name>` folder
 @inproceedings{iurada2023advancing,
       title={Advancing Fairness with Cross-Domain Learning}, 
       author={Leonardo Iurada and Silvia Bucci and Timothy M. Hospedales and Tatiana Tommasi},
-      journal={Extended Abstract, WiCV Workshop at ICCV},
+      booktitle={Extended Abstract, WiCV Workshop at ICCV},
       year={2023}
 }
 ```
