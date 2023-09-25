@@ -199,6 +199,14 @@ NOTE: additional models shall go inside the `models/<task-name>` folder
 
 # Citation
 ```
+@inproceedings{iurada2023advancing,
+      title={Advancing Fairness with Cross-Domain Learning}, 
+      author={Leonardo Iurada and Silvia Bucci and Timothy M. Hospedales and Tatiana Tommasi},
+      journal={Extended Abstract, WiCV Workshop at ICCV},
+      year={2023}
+}
+```
+```
 @article{iurada2023fairness,
       title={Fairness meets Cross-Domain Learning: a new perspective on Models and Metrics}, 
       author={Leonardo Iurada and Silvia Bucci and Timothy M. Hospedales and Tatiana Tommasi},
