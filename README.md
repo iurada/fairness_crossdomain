@@ -1,4 +1,4 @@
-# Fairness meets Cross-Domain Learning: a new perspective on Models and Metrics
+# Fairness meets Cross-Domain Learning: a Benchmark of Models and Metrics
 
 Official code of our work "Fairness meets Cross-Domain Learning: a Benchmark of Models and Metrics"
 
