@@ -1,5 +1,8 @@
 import torchvision.transforms as T
-from RandAugment import RandAugment
+try:
+    from RandAugment import RandAugment
+except ModuleNotFoundError:
+    from torchvision.transforms import RandAugment
 
 class BaseTrainTransform:
     def __init__(self):

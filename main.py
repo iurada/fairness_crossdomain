@@ -65,7 +65,7 @@ def main():
     
     # Test phase
     experiment.load(os.path.join(args.log_path, 'best.pth'))
-    predicted, target, group = experiment.evaluate(dataloaders['test'])
+    predicted, target, group, _ = experiment.evaluate(dataloaders['test'])
     metrics = collect_metrics(meters_dict, predicted, target, group)
 
     # Log metrics eg. via wandb
